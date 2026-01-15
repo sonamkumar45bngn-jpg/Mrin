@@ -1,0 +1,39 @@
+name: Keep Codespace Alive
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/5 * * * *"   # every 5 minutes
+
+jobs:
+  keep_alive:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install GitHub CLI & jq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gh jq
+
+      - name: Authenticate GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+        run: |
+          echo "$GH_TOKEN" | gh auth login --with-token
+
+      - name: Check Codespace state
+        env:
+          CODESPACE_NAME: ${{ secrets.MY_CODESPACE_NAME }}
+        run: |
+          STATUS=$(gh codespace list --json name,state \
+            | jq -r --arg name "$CODESPACE_NAME" '.[] | select(.name==$name) | .state')
+
+          echo "Codespace status: $STATUS"
+
+          if [ "$STATUS" = "Shutdown" ]; then
+            echo "Codespace is sleeping — starting it now..."
+            gh codespace start --codespace "$CODESPACE_NAME"
+          else
+            echo "Codespace already running."
+          fi
+          

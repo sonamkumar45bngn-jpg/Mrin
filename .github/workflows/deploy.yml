@@ -19,7 +19,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
         run: |
-          echo "$GH_TOKEN" | gh auth login --with-token
+          echo "${{ secrets.MY_GITHUB_TOKEN }}" | gh auth login --with-token
 
       - name: Check Codespace state
         env:
